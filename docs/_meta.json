@@ -1,0 +1,50 @@
+[
+  {
+    "text": "主页",
+    "link": "/hello/",
+    "activeMatch": "/hello/",
+    "position": "left"
+  },
+  {
+    "text": "IntelligentHR",
+    "link": "/intelligent-hr/",
+    "activeMatch": "/intelligent-hr/",
+    "position": "left"
+  },
+  {
+    "text": "大模型与Agent",
+    "link": "/llm-ai-agent/",
+    "activeMatch": "/llm-ai-agent/",
+    "position": "left"
+  },
+  {
+    "text": "机器学习",
+    "link": "/machine-learning/",
+    "activeMatch": "/machine-learning/",
+    "position": "left"
+  },
+  {
+    "text": "数据分析",
+    "link": "/data-analysis/",
+    "activeMatch": "/data-analysis/",
+    "position": "left"
+  },
+  {
+    "text": "Homelab搭建",
+    "link": "/self-hosted/",
+    "activeMatch": "/self-hosted/",
+    "position": "left"
+  },
+  {
+    "text": "个人网站搭建",
+    "link": "/blog-site/",
+    "activeMatch": "/blog-site/",
+    "position": "left"
+  },
+  {
+    "text": "实用工具",
+    "link": "/utility-bookmarks/",
+    "activeMatch": "/utility-bookmarks/",
+    "position": "left"
+  }
+]

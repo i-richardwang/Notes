@@ -1,0 +1,31 @@
+[
+    "index",
+    {
+        "type": "divider"
+    },
+    {
+        "type": "dir",
+        "name": "bigdata",
+        "label": "大数据服务"
+    },
+    {
+        "type": "dir",
+        "name": "vm",
+        "label": "虚拟机"
+    },
+    {
+        "type": "dir",
+        "name": "network",
+        "label": "网络配置"
+    },
+    {
+        "type": "dir",
+        "name": "services",
+        "label": "服务部署"
+    },
+    {
+        "type": "dir",
+        "name": "linux",
+        "label": "环境配置"
+    }
+]

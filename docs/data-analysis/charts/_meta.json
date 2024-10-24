@@ -1,0 +1,8 @@
+[
+    "network-diagram",
+    "plotly-sankey-chart",
+    "echarts-sankey-chart",
+    "tableau-scatter",
+    "plotly-box-violin",
+    "nightingale-chart"
+]

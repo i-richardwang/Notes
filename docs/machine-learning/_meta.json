@@ -1,0 +1,16 @@
+[
+    "index",
+    {
+        "type": "divider"
+    },
+    {
+        "type": "dir",
+        "name": "basic",
+        "label": "机器学习基础"
+    },
+    {
+        "type": "dir",
+        "name": "ensemble-learning",
+        "label": "集成学习"
+    }
+]

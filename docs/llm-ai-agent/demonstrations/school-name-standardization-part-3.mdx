@@ -1,0 +1,395 @@
+---
+title: (三) 任务节点函数与决策路由实现
+description: 介绍项目中各类函数的封装技巧，重点阐述大模型任务节点、决策路由和结果汇总的实现逻辑。
+---
+
+# {frontmatter.title}
+
+在做好了数据准备和核心大模型任务的构建后，下一步就是将这些任务封装为节点函数，并构建决策路由节点和结果汇总节点。
+
+## 大模型任务节点函数封装
+
+在上一节中，我们已经构建了三个大模型任务的核心任务，但还需要将这些节点封装为函数，以便于LangGraph调用。
+
+### 封装决策并识别标准名称任务
+
+```python
+from typing import Dict
+
+def determine_routing_and_standardize(state: Dict) -> Dict:
+    """
+    Determine the routing action, identify the official school name, and update the state.
+
+    Args:
+        state (Dict): The current state of the process
+
+    Returns:
+        Dict: The updated state
+    """
+    print("---DETERMINE ROUTING AND STANDARDIZE---")
+    # 调用大模型任务
+    result = decision_and_standardization.invoke({"user_query": state["user_query"]})
+    # 更新状态
+    state["routing_action"] = result.action
+    state["standardized_name"] = result.official_names
+
+    return state
+```
+
+:::note
+可以发现，在节点函数中，函数的输入和输出都是状态字典，而字段中包含的字段是我们在第一篇文章中定义的状态字段。
+:::
+
+#### 效果演示
+
+接下来，我们测试一下这个函数：
+
+```
+initial_state = {
+    "user_query": "通大"
+}
+
+updated_state = determine_routing_and_standardize(initial_state)
+print(updated_state)
+```
+
+大模型成功更新了状态：
+
+```text title="Output"
+---DETERMINE ROUTING AND STANDARDIZE---
+{'user_query': '通大', 'routing_action': 'direct_retrieval', 'standardized_name': ['南通大学', 'Nantong University']}
+```
+
+### 封装名称匹配评估任务
+
+```python
+from typing import Dict
+
+def evaluate_name_match(state: Dict) -> Dict:
+    """
+    Evaluate if the retrieved school name accurately matches the original user query.
+    If the routing_action is 'perform_search', also consider the search results.
+    Updates the state with the match status.
+
+    Args:
+        state (Dict): The current state of the process
+
+    Returns:
+        Dict: The updated state with match status
+    """
+    print("---EVALUATE NAME MATCH---")
+
+    # 准备评估任务的输入
+    grade_result = school_name_match_grader.invoke({
+        "retrieved_name": state["retrieved_school_name"],
+        "original_query": state["user_query"],
+        "search_results": state.get("search_results")
+    })
+
+    # 更新状态中的match_status属性
+    state["match_status"] = grade_result.match_status
+
+    return state
+```
+
+#### 效果演示
+
+我们采用一个不通过的示例来做测试：
+
+```python
+# 示例调用
+initial_state = {
+    'user_query': '通大',
+    'routing_action': 'direct_retrieval',
+    'standardized_name': ['南通大学', 'Nantong University'],
+    'retrieved_school_name': '南京大学'
+}
+
+updated_state = evaluate_name_match(initial_state)
+print(updated_state)
+```
+
+大模型成功将状态中的match_status属性更新为no_match：
+
+```text title="Output"
+---EVALUATE NAME MATCH---
+{'user_query': '通大', 'routing_action': 'direct_retrieval', 'standardized_name': ['南通大学', 'Nantong University'], 'retrieved_school_name': '南京大学', 'match_status': 'no_match'}
+```
+
+### 封装网络搜索结果分析任务
+
+```python
+from typing import Dict
+
+def analyze_search_results(state: Dict) -> Dict:
+    """
+    Analyze the web search results to identify and confirm the top-level school name.
+
+    Args:
+        state (Dict): The current state of the process
+
+    Returns:
+        Dict: The updated state
+    """
+    print("---ANALYZE SEARCH RESULTS---")
+    # 获取搜索结果片段
+    snippets = state["search_results"]
+
+    # 调用大模型任务分析搜索结果
+    analysis_result = web_search_analysis.invoke({
+        "user_query": state["user_query"],
+        "snippets": snippets
+    })
+
+    # 更新状态中的standardized_name和search_status属性
+    state["standardized_name"] = analysis_result.identified_school_name if analysis_result.status == "known" else None
+    state["search_status"] = analysis_result.status
+
+    print(f"---SEARCH ANALYSIS RESULT: {analysis_result.status}---")
+    return state
+```
+
+#### 效果演示
+
+```python
+initial_state = {'routing_action': 'perform_search',
+ 'search_results': [{'content': '邮编：710600. 电话：029-81361999. 传真：029-81361991. '
+                                '地址：成都市天府新区天府菁蓉中心B区2-6栋. 邮编：610000. '
+                                '联系电话：028-86035758. 电子邮件：cd@gsm.pku.edu.cn. '
+                                '认证机构名称：. ©2017 北京大学光华管理学院 版权所有 '
+                                '京ICP备05065075-1.',
+                     'url': 'https://www.gsm.pku.edu.cn/index.htm'},
+                    {'content': '作为北大工商管理教育的主体，北京大学光华管理学院是亚太地区最优秀的商学院之一。 '
+                                '秉承北大百年风骨，以"创造管理知识，培养商界领袖，推动社会进步"为使命，光华管理学院在厉以宁等历任院长和现任院长刘俏的领导下，已走过30余载春秋。',
+                     'url': 'https://www.gsm.pku.edu.cn/pkugsm/xyjj.htm'},
+                    {'content': '北京大学光华管理学院是北京大学工商管理教育的主体，是亚太地区最优秀的商学院之一。1978年，北京大学成立国民经济管理专业。1993年，北京大学经济学院经济管理系与北京大学管理科学中心合并为北京大学工商管理学院。1985年，北京大学经济学院和北京大学管理科学中心同时成立，经济学院 '
+                                '...',
+                     'url': 'https://baike.baidu.com/item/北京大学光华管理学院/3981692'},
+                    {'content': '北大光华管理学院mba项目自1994年成立以来，一直致力于培养具有社会责任感和全球视野的高级管理者与未来商业领袖。光华mba项目坚持以"创造管理知识，培养商界领袖，推动社会进步"为使命，努力打造富有人文精神的mba项目，并借助北大深厚的人文底蕴、系统而创新的课程设置以及优秀的师资 '
+                                '...',
+                     'url': 'https://www.gsm.pku.edu.cn/mba/index.htm'},
+                    {'content': 'Guanghua School of Management is proud to '
+                                'announce that nine of its professors, along '
+                                'with 107 other faculty members from various '
+                                'fields in Peking University, were named as '
+                                '"Highly Cited Chinese Researchers of 2020" by '
+                                'Elsevier, a globally renowned academic '
+                                "publication group. Professor Li Yining's "
+                                '"Cultural Economics" Named as 2020 Best ...',
+                     'url': 'https://en.gsm.pku.edu.cn/index.htm'}],
+ 'user_query': '光华商学院'}
+
+updated_state = analyze_search_results(initial_state)
+print(updated_state)
+```
+
+```text title="Output"
+---ANALYZE SEARCH RESULTS---
+---SEARCH ANALYSIS RESULT: known---
+{'routing_action': 'perform_search', 'search_results': [{'content': '邮编：710600. 电话：029-81361999. 传真：029-81361991. 地址：成都市天府新区天府菁蓉中心B区2-6栋. 邮编：610000. 联系电话：028-86035758. 电子邮件：cd@gsm.pku.edu.cn. 认证机构名称：. ©2017 北京大学光华管理学院 版权所有 京ICP备05065075-1.', 'url': 'https://www.gsm.pku.edu.cn/index.htm'}, {'content': '作为北大工商管理教育的主体，北京大学光华管理学院是亚太地区最优秀的商学院之一。 秉承北大百年风骨，以"创造管理知识，培养商界领袖，推动社会进步"为使命，光华管理学院在厉以宁等历任院长和现任院长刘俏的领导下，已走过30余载春秋。', 'url': 'https://www.gsm.pku.edu.cn/pkugsm/xyjj.htm'}, {'content': '北京大学光华管理学院是北京大学工商管理教育的主体，是亚太地区最优秀的商学院之一。1978年，北京大学成立国民经济管理专业。1993年，北京大学经济学院经济管理系与北京大学管理科学中心合并为北京大学工商管理学院。1985年，北京大学经济学院和北京大学管理科学中心同时成立，经济学院 ...', 'url': 'https://baike.baidu.com/item/北京大学光华管理学院/3981692'}, {'content': '北大光华管理学院mba项目自1994年成立以来，一直致力于培养具有社会责任感和全球视野的高级管理者与未来商业领袖。光华mba项目坚持以"创造管理知识，培养商界领袖，推动社会进步"为使命，努力打造富有人文精神的mba项目，并借助北大深厚的人文底蕴、系统而创新的课程设置以及优秀的师资 ...', 'url': 'https://www.gsm.pku.edu.cn/mba/index.htm'}, {'content': 'Guanghua School of Management is proud to announce that nine of its professors, along with 107 other faculty members from various fields in Peking University, were named as "Highly Cited Chinese Researchers of 2020" by Elsevier, a globally renowned academic publication group. Professor Li Yining\'s "Cultural Economics" Named as 2020 Best ...', 'url': 'https://en.gsm.pku.edu.cn/index.htm'}],
+'user_query': '光华商学院',
+'standardized_name': '北京大学',
+'search_status': 'known'}
+```
+
+## 决策路由节点构建
+
+另一个节点类型是决策路由节点，这些节点用于在工作流中根据不同的条件和结果，决定下一步的执行路径，但不会在流程图中体现为执行节点，其作用是输出下一个执行节点的名称。
+
+### 决策节点：determine_next_step
+
+determine_next_step节点接在determine_routing_and_standardize任务之后，接受当前的状态作为输入，根据routing_action属性的值，决定下一步是调用perform_web_search节点还是direct_retrieval节点。
+
+```python
+def determine_next_step(state: Dict) -> str:
+    """
+    Decide the next node to call based on the routing action.
+
+    Args:
+        state (Dict): The current state of the process
+
+    Returns:
+        str: The next node to call
+    """
+    action = state["routing_action"]
+    if action == "perform_search":
+        print("---ROUTING TO PERFORM SEARCH---")
+        return "perform_web_search"
+    else:
+        print("---ROUTING TO DIRECT RETRIEVAL---")
+        return "direct_retrieval"
+```
+
+#### 效果演示
+
+```python
+initial_state = {
+    "user_query": "通大",
+    "routing_action": "direct_retrieval",
+}
+
+next_node = determine_next_step(initial_state)
+print(next_node)
+```
+
+```text title="Output"
+---ROUTING TO DIRECT RETRIEVAL---
+recognized
+```
+
+### 处理匹配评估结果节点：handle_match_evaluation
+
+handle_match_evaluation节点用于处理名称匹配评估的结果，并决定下一步的执行路径。根据match_status属性的值，决定下一步是调用generate_final_output节点还是perform_web_search节点。
+
+```python
+def handle_match_evaluation(state: Dict) -> str:
+    """
+    Handle the result of the name match evaluation and determine the next step.
+
+    Args:
+        state (Dict): The current state of the process
+
+    Returns:
+        str: The next node to call based on the evaluation result
+    """
+    match_status = state["match_status"]
+
+    if match_status == "match":
+        print("---EVALUATION RESULT: MATCH---")
+        return "generate_final_output"
+    else:
+        if state["routing_action"] == "direct_retrieval":
+            print("---EVALUATION RESULT: NO MATCH, ROUTING TO PERFORM SEARCH---")
+            return "perform_web_search"
+        else:
+            print("---EVALUATION RESULT: NO MATCH, FINALIZING---")
+            return "generate_final_output"
+```
+
+#### 效果演示
+
+```python
+initial_state = {
+    "user_query": "通大",
+    "routing_action": "direct_retrieval",
+    "match_status": "no_match"
+}
+
+next_node = handle_match_evaluation(initial_state)
+print(next_node)
+```
+
+```text title="Output"
+---EVALUATION RESULT: NO MATCH, ROUTING TO PERFORM SEARCH---
+no_match
+```
+
+### 分析搜索结果后的决策节点：determine_post_search_step
+
+determine_post_search_step节点用于在分析搜索结果后，根据search_status属性的值，决定下一步是调用generate_final_output节点还是direct_retrieval节点。
+
+```python
+def determine_post_search_step(state: Dict) -> str:
+    """
+    Determine the next step after analyzing search results based on the routing action.
+    If the routing action was 'direct_retrieval' and then flowed to 'analyze_search_results',
+    guide to 'generate_final_output'. If the routing action was 'perform_search' directly,
+    guide to 'direct_retrieval'.
+
+    Args:
+        state (Dict): The current state of the process
+
+    Returns:
+        str: The next node to call
+    """
+    if state["search_status"] == "unknown":
+        print("---POST SEARCH: STATUS UNKNOWN, ROUTING TO FINAL OUTPUT---")
+        return "generate_final_output"
+    elif state["routing_action"] == "direct_retrieval":
+        print("---POST SEARCH: ROUTING TO FINAL OUTPUT---")
+        return "generate_final_output"
+    else:
+        print("---POST SEARCH: ROUTING TO DIRECT RETRIEVAL---")
+        return "direct_retrieval"
+```
+
+#### 效果演示
+
+```python
+initial_state = {
+    'user_query': '茅台学院',
+    'routing_action': 'direct_retrieval',
+    'retrieved_records': None,
+    'standardized_name': '茅台学院',
+    'search_results': '茅台学院是2017年设立的非营利性全日制应用型普通本科高校，以酿酒产业链为特色，设有15个本科专业，拥有一支专兼结合的师资队伍。学校秉承"德才兼备、承创并举、酿理通融、知行合一"的办学理念，努力建设成为与茅台品牌相称的"行业一流、世界知名"的大学。 茅台学院（Moutai Institute）位于贵州省仁怀市，是由中国贵州茅台酒厂（集团）有限责任公司举办，2017年5月23日经国家教育部批准设置的全日制普通本科高校。学校以全日制应用型普通本科教育为主，适时发展研究生教育，是我国第一所围绕酿酒产业链培养应用型人才的非营利性本科高校。 本文提供了茅台学院2023年在各省的录取分数线信息，包括文科、理科、物理类等不同科类和招生类型的最低分和最低位次。考生可以参考本文的数据，但也要注意其他因素影响录取结果。 茅台学院是一所非营利性全日制应用型普通本科高校，围绕酿酒产业链建设学科专业，拥有多个省部级科研平台和国家级科研项目。该公告介绍了学校的招聘层次、待遇、流程、条件和联系方式，欢迎有意向的高层次人才报名。 茅台学院哪些专业晋升2024年世界一流专业、中国顶尖专业和中国一流专业行列？ 2024年全国高考即将来临，为了给2024年全国高考优秀考生选择报考茅台学院提供权威参考指南，全国第三方大学评价机构艾瑞深校友会网(Cuaa.net)撰写、科学出版社即将公开出版发行 ...',
+    'match_status': 'no_match',
+    'retrieved_school_name': '复旦大学',
+    'search_status': 'known'
+}
+
+next_node = determine_post_search_step(initial_state)
+print(next_node)
+```
+
+```text title="Output"
+---POST SEARCH: ROUTING TO FINAL OUTPUT---
+finalize
+```
+
+## 结果汇总节点函数构建
+
+生成最终输出节点：generate_final_output
+
+generate_final_output节点用于根据流程的最终状态生成标准化的学校名称，作为项目的最终输出结果。以下是节点函数的实现：
+
+```python
+def generate_final_output(state: Dict) -> Dict:
+    """
+    Generate the final output based on the process state.
+
+    Args:
+        state (Dict): The current state of the process
+
+    Returns:
+        Dict: The final output state with the determined school name
+    """
+    print("---GENERATE FINAL OUTPUT---")
+
+    if state.get("match_status") == "match":
+        final_name = state["retrieved_school_name"]
+    elif state.get("search_status") == "unknown":
+        final_name = None
+    elif state.get("search_status") == "known":
+        final_name = state["standardized_name"]
+    else:
+        final_name = None
+
+    state["final_school_name"] = final_name
+    print(f"---FINAL SCHOOL NAME: {final_name}---")
+
+    return state
+```
+
+#### 效果演示
+
+```python
+initial_state = {
+    'user_query': '茅台学院',
+    'routing_action': 'direct_retrieval',
+    'retrieved_records': None,
+    'standardized_name': '茅台学院',
+    'search_results': '茅台学院是2017年设立的非营利性全日制应用型普通本科高校，以酿酒产业链为特色，设有15个本科专业，拥有一支专兼结合的师资队伍。学校秉承"德才兼备、承创并举、酿理通融、知行合一"的办学理念，努力建设成为与茅台品牌相称的"行业一流、世界知名"的大学。 茅台学院（Moutai Institute）位于贵州省仁怀市，是由中国贵州茅台酒厂（集团）有限责任公司举办，2017年5月23日经国家教育部批准设置的全日制普通本科高校。学校以全日制应用型普通本科教育为主，适时发展研究生教育，是我国第一所围绕酿酒产业链培养应用型人才的非营利性本科高校。 本文提供了茅台学院2023年在各省的录取分数线信息，包括文科、理科、物理类等不同科类和招生类型的最低分和最低位次。考生可以参考本文的数据，但也要注意其他因素影响录取结果。 茅台学院是一所非营利性全日制应用型普通本科高校，围绕酿酒产业链建设学科专业，拥有多个省部级科研平台和国家级科研项目。该公告介绍了学校的招聘层次、待遇、流程、条件和联系方式，欢迎有意向的高层次人才报名。 茅台学院哪些专业晋升2024年世界一流专业、中国顶尖专业和中国一流专业行列？ 2024年全国高考即将来临，为了给2024年全国高考优秀考生选择报考茅台学院提供权威参考指南，全国第三方大学评价机构艾瑞深校友会网(Cuaa.net)撰写、科学出版社即将公开出版发行 ...',
+    'match_status': 'no_match',
+    'retrieved_school_name': '复旦大学',
+    'search_status': 'known'
+}
+
+updated_state = generate_final_output(initial_state)
+print(updated_state)
+```
+
+```text title="Output"
+---GENERATE FINAL OUTPUT---
+---FINAL SCHOOL NAME: 茅台学院---
+{'user_query': '茅台学院', 'routing_action': 'direct_retrieval', 'retrieved_records': None, 'standardized_name': '茅台学院', 'search_results': '茅台学院是2017年设立的非营利性全日制应用型普通本科高校，以酿酒产业链为特色，设有15个本科专业，拥有一支专兼结合的师资队伍。学校秉承"德才兼备、承创并举、酿理通融、知行合一"的办学理念，努力建设成为与茅台品牌相称的"行业一流、世界知名"的大学。 茅台学院（Moutai Institute）位于贵州省仁怀市，是由中国贵州茅台酒厂（集团）有限责任公司举办，2017年5月23日经国家教育部批准设置的全日制普通本科高校。学校以全日制应用型普通本科教育为主，适时发展研究生教育，是我国第一所围绕酿酒产业链培养应用型人才的非营利性本科高校。 本文提供了茅台学院2023年在各省的录取分数线信息，包括文科、理科、物理类等不同科类和招生类型的最低分和最低位次。考生可以参考本文的数据，但也要注意其他因素影响录取结果。 茅台学院是一所非营利性全日制应用型普通本科高校，围绕酿酒产业链建设学科专业，拥有多个省部级科研平台和国家级科研项目。该公告介绍了学校的招聘层次、待遇、流程、条件和联系方式，欢迎有意向的高层次人才报名。 茅台学院哪些专业晋升2024年世界一流专业、中国顶尖专业和中国一流专业行列？ 2024年全国高考即将来临，为了给2024年全国高考优秀考生选择报考茅台学院提供权威参考指南，全国第三方大学评价机构艾瑞深校友会网(Cuaa.net)撰写、科学出版社即将公开出版发行 ...', 'match_status': 'no_match', 'retrieved_school_name': '复旦大学', 'search_status': 'known', 'final_school_name': '茅台学院'}
+```

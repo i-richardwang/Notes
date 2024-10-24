@@ -1,0 +1,6 @@
+[
+    "mirror-source",
+    "ntp",
+    "docker-install",
+    "package-install"
+]

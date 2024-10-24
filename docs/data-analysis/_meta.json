@@ -1,0 +1,21 @@
+[
+    "index",
+    {
+        "type": "divider"
+    },
+    {
+        "type": "dir",
+        "name": "dataprocessing",
+        "label": "数据处理"
+    },
+    {
+        "type": "dir",
+        "name": "tableau",
+        "label": "Tableau进阶"
+    },
+    {
+        "type": "dir",
+        "name": "charts",
+        "label": "数据可视化"
+    }
+]

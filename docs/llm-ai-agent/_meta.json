@@ -1,0 +1,31 @@
+[
+    "index",
+    {
+        "type": "divider"
+    },
+    {
+        "type": "dir",
+        "name": "demo",
+        "label": "大模型应用探索"
+    },
+    {
+        "type": "dir",
+        "name": "optimizing",
+        "label": "高效优化策略"
+    },
+    {
+        "type": "dir",
+        "name": "demonstrations",
+        "label": "实战案例详解"
+    },
+    {
+        "type": "dir",
+        "name": "examples",
+        "label": "特色案例拓展"
+    },
+    {
+        "type": "dir",
+        "name": "tools",
+        "label": "模型部署指南"
+    }
+]

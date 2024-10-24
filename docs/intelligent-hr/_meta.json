@@ -1,0 +1,11 @@
+[
+    "index",
+    {
+        "type": "divider"
+    },
+    {
+        "type": "dir",
+        "name": "functions",
+        "label": "功能模块"
+    }
+]

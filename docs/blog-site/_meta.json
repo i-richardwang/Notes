@@ -1,0 +1,11 @@
+[
+    "index",
+    {
+        "type": "divider"
+    },
+    {
+        "type": "dir",
+        "name": "astro",
+        "label": "Astro 框架"
+    }
+]

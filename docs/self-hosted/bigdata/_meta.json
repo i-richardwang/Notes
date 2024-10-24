@@ -1,0 +1,8 @@
+[
+    "dolphinscheduler-install",
+    "metabase",
+    "datalore",
+    "hadoop-deploy",
+    "hive-on-spark-deploy",
+    "doris-deploy"
+]

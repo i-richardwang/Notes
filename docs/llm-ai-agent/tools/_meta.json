@@ -1,0 +1,8 @@
+[
+    "langfuse",
+    "lobe-chat-deployment",
+    "llm-docker-env",
+    "ollama-deploy",
+    "milvus",
+    "openai-api-for-open-llm"
+]
