@@ -18,6 +18,9 @@ export default defineConfig({
       { icon: 'github', mode: 'link', content: 'https://github.com/i-Richard-me' },
     ],
   },
+  head: [
+    '<script defer data-domain="blog.richardwang.me" src="https://plausible.homelab.wang/js/script.js"></script>',
+  ],
   plugins: [
     fileTree(),
     sitemap({
