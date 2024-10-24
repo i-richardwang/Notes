@@ -17,6 +17,9 @@ importers:
       rspress-plugin-file-tree:
         specifier: ^0.4.0
         version: 0.4.0(rspress@1.35.0(webpack@5.95.0))
+      rspress-plugin-sitemap:
+        specifier: ^1.1.1
+        version: 1.1.1
     devDependencies:
       '@types/node':
         specifier: ^16.18.115
@@ -1506,6 +1509,9 @@ packages:
     resolution: {integrity: sha512-VIOufC+0ljC2DJBpa7jV3TmqE+kkpQUXt1URNzWF5CJQINEwW3QMTCPby4uNtVGq5e+N2UpuCfHmG+TlqydI+w==}
     peerDependencies:
       rspress: '*'
+
+  rspress-plugin-sitemap@1.1.1:
+    resolution: {integrity: sha512-usb6zWoi5wFFmBeA9HKR6BhsnnsItudMBarc54GYpuRL55SWkLxyWyMijv14mUI04FI7J7lEmea08uZE0bVKxg==}
 
   rspress@1.35.0:
     resolution: {integrity: sha512-91cU8ZLfS/QSjjwuUIQ4lCP/N6E5EwD85stUW37fMUmTSBdLlMQKXT9f9IPBluEWKROK/WxT+66kfg8++LO4Tg==}
@@ -4027,6 +4033,8 @@ snapshots:
       rspress-plugin-devkit: 0.3.0(rspress@1.35.0(webpack@5.95.0))
     transitivePeerDependencies:
       - supports-color
+
+  rspress-plugin-sitemap@1.1.1: {}
 
   rspress@1.35.0(webpack@5.95.0):
     dependencies:
