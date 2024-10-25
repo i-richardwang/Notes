@@ -1,6 +1,6 @@
 [
     "mirror-source",
+    "package-install",
     "ntp",
-    "docker-install",
-    "package-install"
+    "docker-install"
 ]

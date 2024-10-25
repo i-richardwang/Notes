@@ -32,7 +32,7 @@ import {Tabs, Tab} from '@theme';
 
     <Tabs>
         <Tab label="Rockylinux 9">
-            ```bash frame='none'
+            ```bash
             sudo sed -e 's|^mirrorlist=|#mirrorlist=|g' \
                     -e 's|^#baseurl=http://dl.rockylinux.org/$contentdir|baseurl=https://mirrors.cernet.edu.cn/rocky|g' \
                     -i.bak \
@@ -41,7 +41,7 @@ import {Tabs, Tab} from '@theme';
             ```
         </Tab>
         <Tab label="RockyLinux 8">
-            ```bash frame='none'
+            ```bash
             sudo sed -e 's|^mirrorlist=|#mirrorlist=|g' \
                     -e 's|^#baseurl=http://dl.rockylinux.org/$contentdir|baseurl=https://mirrors.cernet.edu.cn/rocky|g' \
                     -i.bak \
@@ -55,12 +55,12 @@ import {Tabs, Tab} from '@theme';
 
 2. 清除历史缓存
 
-    ```bash frame='none'
+    ```bash
     sudo dnf clean all
     ```
 3. 更新缓存
 
-    ```bash frame='none'
+    ```bash
     sudo dnf makecache
     ```
 
@@ -68,7 +68,7 @@ import {Tabs, Tab} from '@theme';
 
 1. 在安装时替换以下 mirror 地址
 
-    ```bash frame='none'
+    ```bash
     https://mirrors.cernet.edu.cn/ubuntu/
     ```
 
@@ -76,6 +76,9 @@ import {Tabs, Tab} from '@theme';
 
     <Tabs>
         <Tab label="快速配置命令">
+
+        在终端中执行以下命令
+
         ```bash
         cat <<'EOF' > /etc/apt/sources.list
         # 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
@@ -99,6 +102,9 @@ import {Tabs, Tab} from '@theme';
         ```
         </Tab>
         <Tab label="/etc/apt/sources.list">
+
+        编辑 `/etc/apt/sources.list` 文件
+
         ```bash
         // /etc/apt/sources.list
 

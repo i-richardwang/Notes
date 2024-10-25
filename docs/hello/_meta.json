@@ -1,0 +1,22 @@
+[
+    "index",
+    {
+        "type": "divider"
+    },
+    {
+        "type": "section-header",
+        "label": "我的项目"
+    },
+    {
+        "type": "file",
+        "name": "../intelligent-hr/index",
+        "label": "Intelligent HR"
+    },
+    {
+        "type": "divider"
+    },
+    {
+        "type": "section-header",
+        "label": "近期精选"
+    }
+]

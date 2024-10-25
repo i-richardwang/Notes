@@ -1,4 +1,9 @@
 [
+    {
+        "type": "file",
+        "name": "../hello/index",
+        "label": "回到主页"
+    },
     "index",
     {
         "type": "divider"
