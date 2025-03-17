@@ -6,12 +6,6 @@
     "position": "left"
   },
   {
-    "text": "IntelligentHR",
-    "link": "/intelligent-hr/",
-    "activeMatch": "/intelligent-hr/",
-    "position": "left"
-  },
-  {
     "text": "大模型与Agent",
     "link": "/llm-ai-agent/",
     "activeMatch": "/llm-ai-agent/",

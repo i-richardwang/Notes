@@ -9,9 +9,6 @@ hero:
     - theme: brand
       text: 进入主页
       link: /hello/
-    - theme: brand
-      text: Inteligent HR
-      link: /intelligent-hr/
     - theme: alt
       text: GitHub
       link: https://github.com/i-Richard-me

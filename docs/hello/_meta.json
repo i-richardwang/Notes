@@ -8,11 +8,6 @@
         "label": "我的项目"
     },
     {
-        "type": "file",
-        "name": "../intelligent-hr/index",
-        "label": "Intelligent HR"
-    },
-    {
         "type": "divider"
     },
     {
